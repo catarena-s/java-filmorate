@@ -8,7 +8,6 @@ public class UserService extends Service<User> {
     public UserService() {
         super();
         setLogger(log);
-        setType("/users");
     }
 
     @Override

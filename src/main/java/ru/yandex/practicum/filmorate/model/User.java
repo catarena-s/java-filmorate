@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 import ru.yandex.practicum.filmorate.validator.NotContainSpace;
 
 import javax.validation.constraints.Email;
@@ -10,7 +8,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @ToString(callSuper = true)
 @Builder
 public class User extends FilmorateObject {
@@ -26,6 +26,4 @@ public class User extends FilmorateObject {
 
     @Past(message = "Некорректная дата рождения")
     private LocalDate birthday;
-
-
 }

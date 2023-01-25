@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 import ru.yandex.practicum.filmorate.validator.ReleaseDate;
 
 import javax.validation.constraints.NotBlank;
@@ -10,7 +8,9 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @ToString(callSuper = true)
 @Builder
 public class Film extends FilmorateObject {

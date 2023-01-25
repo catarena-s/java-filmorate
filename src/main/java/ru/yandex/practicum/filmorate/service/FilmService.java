@@ -8,6 +8,5 @@ public class FilmService extends Service<Film> {
     public FilmService() {
         super();
         setLogger(log);
-        setType("/films");
     }
 }
