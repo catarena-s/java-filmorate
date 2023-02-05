@@ -114,7 +114,7 @@ public class FilmControllerTest extends ControllerTest {
         film.setId(1);
         testDataCorrectForCreate.add(new TestData(
                         film,
-                        HttpStatus.OK,
+                        HttpStatus.CREATED,
                         Film.class,
                         Film.builder()
                                 .name("Name film")
