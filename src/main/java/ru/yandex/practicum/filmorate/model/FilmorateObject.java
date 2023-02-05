@@ -6,5 +6,5 @@ import lombok.*;
 @Setter
 @ToString
 public abstract class FilmorateObject {
-    protected int id;
+    protected long id;
 }

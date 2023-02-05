@@ -7,6 +7,10 @@ import java.util.Collection;
 
 public interface IController<T> {
     Collection<T> getAll();
+
+    T get(long id);
+
     T update(@Valid @RequestBody T obj);
+
     T create(@Valid @RequestBody T obj);
 }
