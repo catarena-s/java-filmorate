@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Getter
 @Setter
-public abstract class AbstractStorage<T extends FilmorateObject> {
+public abstract class AbstractStorage<T extends FilmorateObject> implements Storage<T> {
     protected final Map<Long, T> map = new HashMap<>();
     private int lastId = 0;
     private Logger log;
@@ -28,19 +28,20 @@ public abstract class AbstractStorage<T extends FilmorateObject> {
     /**
      * получить значение по id
      */
-    public T get(long id) {
+    @Override
+    public T getById(long id) {
         if (!map.containsKey(id))
             throw new ItemNotFoundException(
-                    String.format("%s с id=%d не найден", storageType, id)
-                    , log);
+                    String.format("%s с id=%d не найден", storageType, id),
+                    log::error);
         return map.get(id);
     }
 
     /**
      * Добавление нового объекта
      */
+    @Override
     public T create(T obj) {
-        validate(obj);
         obj.setId(getNextId());
         map.put(obj.getId(), obj);
         return obj;
@@ -49,13 +50,14 @@ public abstract class AbstractStorage<T extends FilmorateObject> {
     /**
      * Обновление
      */
+    @Override
     public T update(T obj) {
-        validate(obj);
         if (map.containsKey(obj.getId())) {
             map.put(obj.getId(), obj);
         } else {
-            throw new ItemNotFoundException(String.format("%s с id=%d не найден"
-                    , storageType, obj.getId()), log);
+            throw new ItemNotFoundException(
+                    String.format("%s с id=%d не найден", storageType, obj.getId()),
+                    log::error);
         }
         return obj;
     }
@@ -64,5 +66,4 @@ public abstract class AbstractStorage<T extends FilmorateObject> {
         return ++lastId;
     }
 
-    abstract void validate(T obj);
 }

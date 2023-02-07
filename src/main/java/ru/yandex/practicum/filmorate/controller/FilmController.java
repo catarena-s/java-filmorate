@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequestMapping("/films")
 public class FilmController extends Controller<Film> {
 
+    @Autowired
     public FilmController(FilmService service) {
         super(service);
     }
@@ -40,9 +42,9 @@ public class FilmController extends Controller<Film> {
     }
 
     @Override
-    public Film get(@PathVariable(name = "id") long id) {
+    public Film getById(@PathVariable(name = "id") long id) {
         log.debug("Получен запрос GET '/films/{}' :", id);
-        return super.get(id);
+        return super.getById(id);
     }
 
     @PutMapping(value = "/{id}/like/{userId}")
@@ -65,7 +67,7 @@ public class FilmController extends Controller<Film> {
             @RequestParam(name = "count", value = "count", defaultValue = "10", required = false) int count) {
         log.debug("Получен запрос GET '/films/popular?count={}'", count);
         if (count < 0) {
-            throw new IncorrectParameterException(log, "count", count);
+            throw new IncorrectParameterException("count", count, log::error);
         }
         return ((FilmService) service).getTopByLikes(count);
     }

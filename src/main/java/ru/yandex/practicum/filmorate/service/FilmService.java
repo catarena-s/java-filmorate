@@ -28,7 +28,7 @@ public class FilmService implements IService<Film> {
      * @return обновленный фильм
      */
     public Film addLike(long filmId, long userId) {
-        Film film = storage.get(filmId);
+        Film film = storage.getById(filmId);
         film.getLikes().add(userId);
         return film;
     }
@@ -41,9 +41,11 @@ public class FilmService implements IService<Film> {
      * @return обновленный фильм
      */
     public Film removeLike(long filmId, long userId) {
-        Film film = storage.get(filmId);
+        Film film = storage.getById(filmId);
         if (!film.getLikes().contains(userId))
-            throw new ItemNotFoundException(String.format("Likes от пользователя id=%d не не найдены", userId), log);
+            throw new ItemNotFoundException(
+                    String.format("Likes от пользователя id=%d не не найдены", userId),
+                    log::error);
         film.getLikes().remove(userId);
         return film;
     }
@@ -60,6 +62,7 @@ public class FilmService implements IService<Film> {
 
     @Override
     public Film create(Film obj) {
+        validate(obj);
         return storage.create(obj);
     }
 
@@ -70,11 +73,16 @@ public class FilmService implements IService<Film> {
 
     @Override
     public Film update(Film obj) {
+        validate(obj);
         return storage.update(obj);
     }
 
     @Override
     public Film get(long id) {
-        return storage.get(id);
+        return storage.getById(id);
+    }
+
+    private void validate(Film obj) {
+        //дополнительная валидация, если не удалось реализовать через аннотации
     }
 }

@@ -31,10 +31,6 @@ public class InMemoryFilmStorage extends AbstractStorage<Film> implements FilmSt
                 .collect(Collectors.toList());
     }
 
-    @Override
-    void validate(Film obj) {
-    }
-
     private int compare(Film f1, Film f2) {
         return f2.getLikes().size() - f1.getLikes().size();
     }

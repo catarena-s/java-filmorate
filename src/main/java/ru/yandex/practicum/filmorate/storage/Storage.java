@@ -8,5 +8,5 @@ public interface Storage<T extends FilmorateObject> {
     T create(T obj);
     Collection<T> getAll();
     T update(T obj);
-    T get(long id);
+    T getById(long id);
 }

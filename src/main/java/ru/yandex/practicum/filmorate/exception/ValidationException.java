@@ -1,9 +1,13 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import org.slf4j.Logger;
+import java.util.function.Consumer;
 
 public class ValidationException extends FilmorateException {
-    public ValidationException(String message, Logger log) {
+    public ValidationException(String message, Consumer<String> log) {
         super(message, log);
+    }
+
+    public ValidationException(String message) {
+        super(message);
     }
 }

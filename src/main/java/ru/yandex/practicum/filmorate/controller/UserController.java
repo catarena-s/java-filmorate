@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController extends Controller<User> {
 
+    @Autowired
     public UserController(UserService service) {
         super(service);
     }
@@ -39,9 +41,9 @@ public class UserController extends Controller<User> {
     }
 
     @Override
-    public User get(@PathVariable(name = "id") long id) {
+    public User getById(@PathVariable(name = "id") long id) {
         log.debug("Получен запрос GET '/users/{}' :", id);
-        return super.get(id);
+        return super.getById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

@@ -49,7 +49,11 @@ public class ErrorHandler {
     public ErrorResponse handleIncorrectParameterError(final IncorrectParameterException e) {
         return new ErrorResponse(e.getMessage());
     }
-
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleFilmorateError(final FilmorateException e) {
+        return new ErrorResponse(e.getMessage());
+    }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleInternalServerError(final Throwable e) {

@@ -1,18 +1,23 @@
 package ru.yandex.practicum.filmorate.exception;
 
 import lombok.Getter;
-import org.slf4j.Logger;
+
+import java.util.function.Consumer;
 
 @Getter
 public class IncorrectParameterException extends FilmorateException {
     private final String parameter;
     private final Object value;
-    private final Logger log;
 
-    public IncorrectParameterException(Logger log, String parameter, Object value) {
+    public IncorrectParameterException(String parameter, Object value, Consumer<String> log) {
         super(String.format("Ошибка с полем %s = %s", parameter, value), log);
         this.parameter = parameter;
         this.value = value;
-        this.log = log;
+    }
+
+    public IncorrectParameterException(String message, String parameter, Object value) {
+        super(message);
+        this.parameter = parameter;
+        this.value = value;
     }
 }

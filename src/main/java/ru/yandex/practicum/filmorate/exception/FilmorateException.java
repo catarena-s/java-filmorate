@@ -1,10 +1,14 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import org.slf4j.Logger;
+import java.util.function.Consumer;
 
 public class FilmorateException extends RuntimeException {
-    public FilmorateException(String message, Logger log) {
+    public FilmorateException(String message, Consumer<String> log) {
         super(message);
-        log.error(message);
+        log.accept(message);
+    }
+
+    public FilmorateException(String message) {
+        super(message);
     }
 }

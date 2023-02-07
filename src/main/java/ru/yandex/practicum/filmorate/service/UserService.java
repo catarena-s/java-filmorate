@@ -26,8 +26,8 @@ public class UserService implements IService<User> {
      * @param friendId id друга
      */
     public User addFriend(long userId, long friendId) {
-        User user = storage.get(userId);
-        User friend = storage.get(friendId);
+        User user = storage.getById(userId);
+        User friend = storage.getById(friendId);
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
         return user;
@@ -40,8 +40,8 @@ public class UserService implements IService<User> {
      * @param friendId id друга, которого нужно удалить
      */
     public User removeFromFriends(long userId, long friendId) {
-        User user = storage.get(userId);
-        User friend = storage.get(friendId);
+        User user = storage.getById(userId);
+        User friend = storage.getById(friendId);
         user.getFriends().remove(friend.getId());
         friend.getFriends().remove(user.getId());
         return user;
@@ -51,8 +51,8 @@ public class UserService implements IService<User> {
      * Получить список общих друзей
      */
     public List<User> getCommonFriends(long userId, long otherId) {
-        User user = storage.get(userId);
-        User otherUser = storage.get(otherId);
+        User user = storage.getById(userId);
+        User otherUser = storage.getById(otherId);
         Set<Long> user1Friends = new HashSet<>(user.getFriends());
         Set<Long> user2Friends = new HashSet<>(otherUser.getFriends());
         user1Friends.retainAll(user2Friends);
@@ -68,6 +68,7 @@ public class UserService implements IService<User> {
 
     @Override
     public User create(User obj) {
+        validate(obj);
         return storage.create(obj);
     }
 
@@ -78,11 +79,19 @@ public class UserService implements IService<User> {
 
     @Override
     public User update(User obj) {
+        validate(obj);
         return storage.update(obj);
     }
 
     @Override
     public User get(long id) {
-        return storage.get(id);
+        return storage.getById(id);
+    }
+
+    protected void validate(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.warn("Поле 'name' не заполнено. Было инициализировано значением login = '{}'.",user.getLogin());
+        }
     }
 }

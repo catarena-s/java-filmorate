@@ -46,12 +46,4 @@ public class InMemoryUserStorage extends AbstractStorage<User> implements UserSt
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
     }
-
-    @Override
-    protected void validate(User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-        }
-    }
-
 }
