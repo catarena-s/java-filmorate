@@ -32,7 +32,7 @@ public class UserControllerTest extends ControllerTest {
                 .build();
 
         ResponseEntity<String> response = restTemplate.postForEntity(endPoint, user, String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         FilmorateObject fromJson = gson.fromJson(response.getBody(), User.class);
         assertNotNull(fromJson);
@@ -113,7 +113,7 @@ public class UserControllerTest extends ControllerTest {
         user.setId(1);
 
         testDataCorrectForCreate.add(new TestData(
-                user, HttpStatus.OK,
+                user, HttpStatus.CREATED,
                 User.class,
                 User.builder()
                         .login("Login")
