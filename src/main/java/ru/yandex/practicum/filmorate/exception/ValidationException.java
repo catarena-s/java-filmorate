@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.exception;
 
-import org.slf4j.Logger;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import java.util.function.Consumer;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Bad request")
-public class ValidationException  extends FilmorateException {
-    public ValidationException(String message, Logger log) {
+public class ValidationException extends FilmorateException {
+    public ValidationException(String message, Consumer<String> log) {
         super(message, log);
+    }
+
+    public ValidationException(String message) {
+        super(message);
     }
 }

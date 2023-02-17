@@ -6,6 +6,6 @@ import javax.validation.ConstraintValidatorContext;
 public class NotContainSpaceValidator implements ConstraintValidator<NotContainSpace, String> {
     @Override
     public boolean isValid(String s, ConstraintValidatorContext context) {
-        return s != null || !s.contains(" ");
+        return !s.contains(" ");
     }
 }

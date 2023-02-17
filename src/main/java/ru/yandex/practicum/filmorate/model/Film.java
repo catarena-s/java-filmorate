@@ -1,31 +1,30 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 import ru.yandex.practicum.filmorate.validator.ReleaseDate;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @ToString(callSuper = true)
-@AllArgsConstructor
+@Builder
 public class Film extends FilmorateObject {
-    @NotNull(message = "Отсутствует название")
-    @NotBlank(message = "Название не должно быть пустым")
-    private final String name;
+    @NotBlank(message = "Отсутствует название")
+    private String name;
 
     @Positive(message = "Продолжительность фильма должна быть положительной")
-    private final int duration;
+    private int duration;
 
     @Size(max = 200, message = "Длинна описания не должна быть больше 200 символов")
-    private final String description;
+    private String description;
 
     @ReleaseDate
-    private final LocalDate releaseDate;
+    private LocalDate releaseDate;//  дата релиза
 
+    private final Set<Long> likes = new HashSet<>();//список лайков(id пользователей поставивших лайк)
 }

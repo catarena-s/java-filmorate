@@ -1,20 +1,28 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import ru.yandex.practicum.filmorate.model.FilmorateObject;
 
-import java.lang.reflect.Type;
-import java.net.URI;
-
 @Getter
+@RequiredArgsConstructor
 @AllArgsConstructor
 public class TestData {
-    private final String expectedBody;
-    private final FilmorateObject expectedObj;
+    private String expectedBody;
+    private FilmorateObject expectedObj;
     private final HttpStatus responseStatusCode;
-    private final Class type;
+    private final Class aClass;
     private final FilmorateObject obj;
+
+    public TestData(String expectedBody, HttpStatus responseStatusCode, Class aClass, FilmorateObject obj) {
+        this(responseStatusCode,aClass,obj);
+        this.expectedBody = expectedBody;
+    }
+
+    public TestData(FilmorateObject expectedObj, HttpStatus responseStatusCode, Class aClass, FilmorateObject obj) {
+        this(responseStatusCode,aClass,obj);
+        this.expectedObj = expectedObj;
+    }
 }

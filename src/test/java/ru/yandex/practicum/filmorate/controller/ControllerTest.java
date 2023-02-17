@@ -1,10 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import com.google.gson.Gson;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,26 +23,31 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-abstract class ControllerTest<IController> {
-    static String endPoint;
-    static Controller controller;
-    static List<TestData> testDataWithErrForCreate = new ArrayList<>();
-    static List<TestData> testDataWithErrForUpdate = new ArrayList<>();
-    static List<TestData> testDataCorrectForCreate = new ArrayList<>();
-    static List<TestData> testDataCorrectForUpdate = new ArrayList<>();
+abstract class ControllerTest{
+    protected static String endPoint;
+    protected static List<TestData> testDataWithErrForCreate = new ArrayList<>();
+    protected static List<TestData> testDataWithErrForUpdate = new ArrayList<>();
+    protected static List<TestData> testDataCorrectForCreate = new ArrayList<>();
+    protected static List<TestData> testDataCorrectForUpdate = new ArrayList<>();
     @Autowired
     protected TestRestTemplate restTemplate;
+    protected Gson gson = GsonAdapter.getGsonWithAdapter();
+    @AfterAll
+    static void clear() {
+        testDataCorrectForCreate.clear();
+        testDataCorrectForUpdate.clear();
+        testDataWithErrForUpdate.clear();
+        testDataWithErrForCreate.clear();
+    }
+
     @Test
     @Order(1)
     void createWithCorrectData() {
         for (TestData testData : testDataCorrectForCreate) {
-
             ResponseEntity<String> response = restTemplate.postForEntity(endPoint, testData.getObj(), String.class);
             assertEquals(testData.getResponseStatusCode(), response.getStatusCode());
 
-            Gson gson = GsonAdapter.getGsonWithAdapter();
-
-            FilmorateObject updatedObject = gson.fromJson(response.getBody(), (Type) testData.getType());
+            FilmorateObject updatedObject = gson.fromJson(response.getBody(), (Type) testData.getAClass());
             assertNotNull(updatedObject);
             assertEquals(testData.getExpectedObj().getId(), updatedObject.getId());
             assertEquals(testData.getExpectedObj(), updatedObject);
@@ -70,9 +72,8 @@ abstract class ControllerTest<IController> {
             ResponseEntity<String> response = restTemplate.exchange(endPoint, HttpMethod.PUT, entity, String.class);
             assertEquals(testData.getResponseStatusCode(), response.getStatusCode());
 
-            Gson gson = GsonAdapter.getGsonWithAdapter();
+            FilmorateObject updatedObject = gson.fromJson(response.getBody(), (Type) testData.getAClass());
 
-            FilmorateObject updatedObject = gson.fromJson(response.getBody(), (Type) testData.getType());
             assertNotNull(updatedObject);
             assertEquals(testData.getExpectedObj().getId(), updatedObject.getId());
             assertEquals(testData.getExpectedObj(), updatedObject);

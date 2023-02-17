@@ -20,7 +20,6 @@ public class GsonAdapter {
         return new GsonBuilder()
                 .setPrettyPrinting()
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
-//                .registerTypeAdapter(Task.class, new TaskDeserializer("taskType"))
                 .create();
     }
 
