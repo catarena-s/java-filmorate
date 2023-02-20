@@ -26,7 +26,7 @@
 | name         | varchar      | название фильма          | not null   |
 | description  | varchar(200) | описание фильма          |            |
 | release_date | date         | дата релиза              | not null   |
-| rating_id    | int          | id рейтинга              | default 0  |
+| rating_id    | int          | id рейтинга              |            |
 
 </details>
 
