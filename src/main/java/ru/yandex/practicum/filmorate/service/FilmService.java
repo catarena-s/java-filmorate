@@ -1,9 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
@@ -12,13 +11,10 @@ import java.util.List;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService implements IService<Film> {
-    private final FilmStorage storage;
 
-    @Autowired
-    public FilmService(FilmStorage storage) {
-        this.storage = storage;
-    }
+    private final FilmStorage storage;
 
     /**
      * Добавить лайк фильму
@@ -28,9 +24,7 @@ public class FilmService implements IService<Film> {
      * @return обновленный фильм
      */
     public Film addLike(long filmId, long userId) {
-        Film film = storage.getById(filmId);
-        film.getLikes().add(userId);
-        return film;
+        return storage.addLike(filmId, userId);
     }
 
     /**
@@ -41,13 +35,7 @@ public class FilmService implements IService<Film> {
      * @return обновленный фильм
      */
     public Film removeLike(long filmId, long userId) {
-        Film film = storage.getById(filmId);
-        if (!film.getLikes().contains(userId))
-            throw new ItemNotFoundException(
-                    String.format("Likes от пользователя id=%d не не найдены", userId),
-                    log::error);
-        film.getLikes().remove(userId);
-        return film;
+        return storage.removeLike(filmId, userId);
     }
 
     /**
@@ -78,7 +66,7 @@ public class FilmService implements IService<Film> {
     }
 
     @Override
-    public Film get(long id) {
+    public Film getById(long id) {
         return storage.getById(id);
     }
 

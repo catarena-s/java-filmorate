@@ -26,9 +26,10 @@ public class UserControllerTest extends ControllerTest {
     @Test
     void createWithoutName() {
         User user = User.builder()
-                .login("Login")
+                .login("LoginTest")
                 .email("af@mail.ru")
                 .birthday(LocalDate.of(1900, 1, 15))
+                .id(5)
                 .build();
 
         ResponseEntity<String> response = restTemplate.postForEntity(endPoint, user, String.class);
@@ -36,7 +37,7 @@ public class UserControllerTest extends ControllerTest {
 
         FilmorateObject fromJson = gson.fromJson(response.getBody(), User.class);
         assertNotNull(fromJson);
-        user.setName("Login");
+        user.setName("LoginTest");
         assertEquals(user, fromJson);
 
     }
@@ -96,7 +97,7 @@ public class UserControllerTest extends ControllerTest {
                 .name("User Name")
                 .birthday(LocalDate.of(1900, 1, 15))
                 .build();
-        userUpdateCorrect.setId(1);
+        userUpdateCorrect.setId(4);
 
         testDataCorrectForUpdate.add(new TestData(
                 userUpdateCorrect, HttpStatus.OK,
@@ -110,10 +111,11 @@ public class UserControllerTest extends ControllerTest {
                 .name("User Name")
                 .birthday(LocalDate.of(1900, 1, 15))
                 .build();
-        user.setId(1);
+        user.setId(4);
 
         testDataCorrectForCreate.add(new TestData(
-                user, HttpStatus.CREATED,
+                user,
+                HttpStatus.CREATED,
                 User.class,
                 User.builder()
                         .login("Login")

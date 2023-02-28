@@ -2,74 +2,69 @@
 **Содержание**
 
 
-1. [ER-схема](README.md#ER-схема)
+1. [ER-диаграмма](README.md#ER-диаграмм)
 2. [Описание таблиц](README.md#Описание-таблиц)
 3. [Скрипты для Film](README.md#Скрипты-для-Film)
 4. [Скрипты для Users](README.md#Скрипты-для-Users)
 
-## ER схема
-
-[//]: # (![]&#40;https://github.com/catarena-s/java-filmorate/blob/main/docs/DB_schem.png?token=A2GDMWJSDNOBLOD4XL5AW7DDOUBGU&#41;)
-
 ![](docs/DB_schem.png)
-
-
 
 ## Описание таблиц
 
 [//]: # (#### Films)
-<details><summary>Films</summary>
+<details><summary>Film</summary>
 
-| Столбец      | Тип          | Описание                 | Примечание |
-|--------------|--------------|--------------------------|------------|
-| film_id      | int          | уникальный идентификатор | PK         |
-| name         | varchar      | название фильма          | not null   |
-| description  | varchar(200) | описание фильма          |            |
-| release_date | date         | дата релиза              | not null   |
-| rating_id    | int          | id рейтинга              |            |
+| Столбец      | Тип          | Описание                  | Примечание           |
+|--------------|--------------|---------------------------|----------------------|
+| film_id      | bigint       | уникальный идентификатор  | PK                   |
+| name         | varchar      | название фильма           | NOT NULL             |
+| description  | varchar(200) | описание фильма           |                      |
+| release_date | date         | дата релиза               | NOT NULL             |
+| duration     | int          | длительность фильма в мин |                      |
+| rating_id    | int          | id рейтинга               | FK(rating.rating_id) |
 
 </details>
 
 [//]: # (#### )
-<details><summary>Users</summary>
+<details><summary>User_info</summary>
 
-| Столбец  | Тип     | Описание                 | Примечание |
-|----------|---------|--------------------------|------------|
-| user_id  | int     | уникальный идентификатор | PK         |
-| name     | varchar | имя пользователя         |            |
-| login    | varchar | логин                    | not null   |
-| birthday | date    | день рождения            | not null   |
-| email    | varchar | email                    | not null   |
+| Столбец  | Тип          | Описание                 | Примечание       |
+|----------|--------------|--------------------------|------------------|
+| user_id  | bigint       | уникальный идентификатор | PK               |
+| name     | varchar      | имя пользователя         |                  |
+| login    | varchar(100) | логин                    | NOT NULL, UNIQUE |
+| email    | varchar(320) | email                    | NOT NULL, UNIQUE |
+| birthday | date         | день рождения            | NOT NULL         |
 </details>
 
 [//]: # (#### )
-<details><summary>Friends</summary>
+<details><summary>Friendship</summary>
 
-| Столбец          | Тип     | Описание                                                                    | Примечание    |
-|------------------|---------|-----------------------------------------------------------------------------|---------------|
-| user_id          | int     | id пользователя                                                             | PK            |
-| friend_id        | int     | id друга                                                                    | PK            |
-| friendship_state | boolean | подтверждение дружбы<br/>false - неподтверждённая<br/>true - подтверждённая | default false |
+| Столбец          | Тип     | Описание                                                                    | Примечание                |
+|------------------|---------|-----------------------------------------------------------------------------|---------------------------|
+| user_id          | bigint  | id пользователя                                                             | PK, FK(user_info.user_id) |
+| friend_id        | bigint  | id друга                                                                    | PK, FK(user_info.user_id) |
+| friendship_state | boolean | подтверждение дружбы<br/>false - неподтверждённая<br/>true - подтверждённая | default = false           |
 </details>
 
 [//]: # (#### )
 <details><summary>Likes</summary>
  каждый пользователь может поставить лайк фильму только один раз
 
-| Столбец | Тип | Описание        | Примечание |
-|---------|-----|-----------------|------------|
-| film_id | int | id фильма       | PK         |
-| user_id | int | id пользователя | PK         |
+| Столбец | Тип    | Описание        | Примечание                |
+|---------|--------|-----------------|---------------------------|
+| film_id | bigint | id фильма       | PK, FK(film.film_id)      |
+| user_id | bigint | id пользователя | PK, FK(user_info.user_id) |
 
 </details>
 
 [//]: # (#### )
 <details><summary>Genre(Список жанров)</summary>
 
-| Столбец  | Тип     | Описание                 | Примечание |
-|----------|---------|--------------------------|------------|
-| genre_id | int     | уникальный идентификатор | PK         |
-| name     | varchar | название                 | not null   |
+| Столбец  | Тип          | Описание                 | Примечание |
+|----------|--------------|--------------------------|------------|
+| genre_id | int          | уникальный идентификатор | PK         |
+| name     | varchar(100) | название                 | NOT NULL   |
 
 | genre_id | name           |
 |----------|----------------|
@@ -79,9 +74,6 @@
 | 4        | Триллер        |
 | 5        | Документальный |
 | 6        | Боевик         |
-| 7        | Приключения    |
-| 8        | Фантастика     |
-| 9        | Семейный       |
 
 </details>
 
@@ -89,10 +81,10 @@
 <details><summary>Film_genre</summary>
 У фильма может быть сразу несколько жанров
 
-| Столбец  | Тип | Описание  | Примечание |
-|----------|-----|-----------|------------|
-| film_id  | int | id фильма | PK         |
-| genre_id | int | id жанра  | PK         |
+| Столбец  | Тип    | Описание  | Примечание             |
+|----------|--------|-----------|------------------------|
+| film_id  | bigint | id фильма | PK, FK(film.film_id)   |
+| genre_id | int    | id жанра  | PK, FK(genre.genre_id) |
 
 </details>
 
@@ -100,11 +92,11 @@
 <details><summary>Rating</summary>
 Рейтинг Ассоциации кинокомпаний (англ. Motion Picture Association, сокращённо МРА). Эта оценка определяет возрастное ограничение для фильма.
 
-| Столбец     | Тип     | Описание                 | Примечание |
-|-------------|---------|--------------------------|------------|
-| rating_id   | int     | уникальный идентификатор | PK         |
-| name        | varchar | название                 | not null   |
-| description | varchar | описание                 |            |
+| Столбец     | Тип          | Описание                 | Примечание |
+|-------------|--------------|--------------------------|------------|
+| rating_id   | int          | уникальный идентификатор | PK         |
+| name        | varchar(200) | название                 | NOT NULL   |
+| description | varchar      | описание                 |            |
 
 | rating_id | name   | description                                                              |
 |-----------|--------|--------------------------------------------------------------------------|
@@ -115,15 +107,17 @@
 | 5         | 	NC-17 | лицам до 18 лет просмотр запрещён                                        |
 </details>
 
-##  Скрипты для Film
+## Скрипты
+[Создание таблиц](src/main/resources/schema.sql)
+### для Film
 
-_GET /films_
++ _GET /films_
 ````roomsql
 SELECT f.film_id, f.name, f.description, f.duration, f.release_date, r.name AS rating_name
 FROM film f
 LEFT JOIN rating r ON r.rating_id = f.rating_id;
 ````
-_GET /films/{id}_
++ _GET /films/{id}_
 ````roomsql
 SELECT  f.film_id, 
         f.name, 
@@ -135,13 +129,13 @@ FROM film f
 LEFT JOIN rating r ON r.rating_id = f.rating_id
 WHERE f.film_id = {id};
 ````
-_POST /films_
++ _POST /films_
 ````roomsql
 INSERT INTO film
 (name, description, duration, release_date)
 VALUES({name}, {description}, {duration}, {release_date});
 ````
-_PUT /films_
+* _PUT /films_
 ````roomsql
 UPDATE film
 SET name = {name}, description = {description}, duration = {duration}, release_date = {release_date}
@@ -157,92 +151,76 @@ WHERE film_id = {id};
 [//]: # (WHERE film_id= 7;)
 
 [//]: # (````)
-_DELETE /films/{id}_
+* _DELETE /films/{id}_
 ````roomsql
 DELETE FROM film
 WHERE film_id = {id};
 ````
-_PUT /films/{id}/like/{userId}_
+* _PUT /films/{id}/like/{userId}_
 ````roomsql
 INSERT INTO likes (film_id, user_id)
 VALUES ({id}, {userId})
-ON CONFLICT (film_id, user_id)
-DO UPDATE 
-SET film_id = EXCLUDED.film_id, user_id = EXCLUDED.user_id;
+ON CONFLICT DO NOTHING;
 ````
-_DELETE /films/{id}/like/{userId}_
+* _DELETE /films/{id}/like/{userId}_
 ````roomsql
 DELETE FROM likes
 WHERE film_id = {id} AND user_id = {userId};
 ````
-_GET /films/popular?count={count}_
+* _GET /films/popular?count={count}_
 ````roomsql
-SELECT  f.film_id, 
-	f.name, 
-	f.description, 
-	f.duration, 
-	f.release_date, 
-	r.name AS rating_name,
-	count_likes 
-FROM film f 
-INNER JOIN (SELECT film_id, count(film_id) count_likes 
-                FROM likes l  
-                GROUP BY film_id 
-                ORDER BY count(film_id) DESC 
-                LIMIT {count})p ON p.film_id = f.film_id 
+SELECT f.film_id, f.name, f.description, f.duration, f.release_date, 
+       r.name AS rating_name, 
+       COUNT(l.film_id) count_likes 
+FROM FILM f 
+LEFT JOIN likes l ON f.FILM_ID = l.FILM_ID  
 LEFT JOIN rating r ON r.rating_id = f.rating_id
-ORDER BY count_likes DESC;
+GROUP BY f.film_id 
+ORDER BY count(l.film_id) DESC, f.film_id ASC
+LIMIT {count};
 ````
 ___
-##  Скрипты для Users
+###  для User_info
 
 [//]: # (#### Получить список всех друзей )
-_GET /users_
+* _GET /users_
 ````roomsql
 SELECT user_id, name, login, email, birthday
-FROM users;
+FROM user_info;
 ````
-_POST /users_
+* _POST /users_
 ````roomsql
-INSERT INTO users
+INSERT INTO users_info
 (name, login, email, birthday)
 VALUES({name}, {login}, {email}, {birthday});
 ````
-_PUT /users_
+* _PUT /users_
 ````roomsql
-UPDATE users
+UPDATE users_info
 SET name = {name}, login = {login}, email = {email}, birthday = {birthday}
 WHERE user_id = {id};
 ````
-_DELETE /users/{id}_
+* _DELETE /users/{id}_
 ````roomsql
-DELETE FROM users
+DELETE FROM users_info
 WHERE user_id = {id};
 ````
 
 [//]: # (#### Получить список друзе)
-_GET /users/{id}/friends_
+* _GET /users/{id}/friends_
 ````roomsql
 SELECT u.user_id, u.name, u.login,u.email, u.birthday
-FROM friends f2
+FROM friendship f2
 LEFT JOIN users u ON u.user_id = f2.friend_id 
 WHERE f2.user_id = {id}
 ````
 
 [//]: # (#### Добавить друга)
-_PUT /users/{id}/friends/{friendId}_
+* _PUT /users/{id}/friends/{friendId}_
 ````roomsql
-INSERT INTO friends
+INSERT INTO friendship
 VALUES ({id}, {friendId})
-ON CONFLICT (user_id, friend_id)
-DO UPDATE 
-SET user_id = EXCLUDED.user_id, friend_id = EXCLUDED.friend_id;
-
-INSERT INTO friends
-VALUES ({friendId}, {id})
-ON CONFLICT (user_id, friend_id)
-DO UPDATE 
-SET user_id = EXCLUDED.user_id, friend_id = EXCLUDED.friend_id;
+ON CONFLICT DO NOTHING;
 ````
 
 [//]: # (#### Подтверждение дружбы)
@@ -257,22 +235,20 @@ SET user_id = EXCLUDED.user_id, friend_id = EXCLUDED.friend_id;
 [//]: # (````)
 
 [//]: # (#### Удалить друга)
-_DELETE /users/{id}/friends/{friendId}_
+* _DELETE /users/{id}/friends/{friendId}_
 ````roomsql
-DELETE FROM friends 
-WHERE (user_id = {id} AND friend_id = {friendId})
-    or(user_id = {friendId} AND friend_id = {id});
+DELETE FROM friendship 
+WHERE (user_id = {id} AND friend_id = {friendId});
 ````
 
 [//]: # (#### Получить общих друзей)
-_GET /users/{id}/friends/common/{otherId}_
+* _GET /users/{id}/friends/common/{otherId}_
 ````roomsql
 SELECT u.user_id, u.name, u.login,u.email, u.birthday
-FROM users u 
-WHERE u.user_id in (
-    SELECT friend_id  FROM friends f WHERE user_id = {id}
-INTERSECT 
-    SELECT friend_id  FROM friends f WHERE user_id = {otherId}
-)
+FROM user_info u INNER JOIN (
+    SELECT friend_id  FROM friendship f WHERE user_id = {id}
+    INTERSECT 
+    SELECT friend_id  FROM friendship f WHERE user_id = {otherId}
+) f ON f.friend_id = u.user_id
 ````
 

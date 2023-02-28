@@ -3,10 +3,13 @@ package ru.yandex.practicum.filmorate.controller;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.http.HttpStatus;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 
 public class FilmControllerTest extends ControllerTest {
+
 
     @BeforeAll
     static void beforeAll() {
@@ -18,6 +21,7 @@ public class FilmControllerTest extends ControllerTest {
     }
 
     private static void initWrongTestDataForCreate() {
+        RatingMPA mpa = new RatingMPA(1,"G");
         testDataWithErrForCreate.add(new TestData(
                         "{\"duration\":\"'0' -> Продолжительность фильма должна быть положительной\"," +
                                 "\"name\":\"'' -> Отсутствует название\"}",
@@ -28,6 +32,8 @@ public class FilmControllerTest extends ControllerTest {
                                 .duration(0)
                                 .description("Description")
                                 .releaseDate(LocalDate.of(1900, 1, 15))
+                                .mpa(mpa)
+                                .likes(new HashSet<>())
                                 .build()
                 )
         );
@@ -40,6 +46,8 @@ public class FilmControllerTest extends ControllerTest {
                                 .duration(-200)
                                 .description("Description")
                                 .releaseDate(LocalDate.of(1900, 1, 15))
+                                .mpa(mpa)
+                                .likes(new HashSet<>())
                                 .build()
                 )
         );
@@ -51,6 +59,8 @@ public class FilmControllerTest extends ControllerTest {
                                 .duration(200)
                                 .description("Description")
                                 .releaseDate(LocalDate.of(1900, 1, 15))
+                                .mpa(mpa)
+                                .likes(new HashSet<>())
                                 .build()
                 )
         );
@@ -70,17 +80,22 @@ public class FilmControllerTest extends ControllerTest {
                                         "который задолжал им деньги, а именно 20 миллионов. о Куглов, " +
                                         "который за время «своего отсутствия», стал кандидатом Коломбани.")
                                 .releaseDate(LocalDate.of(1900, 1, 15))
+                                .mpa(mpa)
+                                .likes(new HashSet<>())
                                 .build()
                 )
         );
     }
 
     private static void initWrongTestDataForUpdate() {
+        RatingMPA mpa = new RatingMPA(1,"G");
         Film filmUpdateWrongId = Film.builder()
                 .name("Updated film")
                 .duration(200)
                 .description("Updated Description")
                 .releaseDate(LocalDate.of(1900, 1, 15))
+                .mpa(mpa)
+                .likes(new HashSet<>())
                 .build();
         filmUpdateWrongId.setId(9999);
         testDataWithErrForUpdate.add(new TestData(
@@ -91,13 +106,17 @@ public class FilmControllerTest extends ControllerTest {
     }
 
     private static void initCorrectTestDataForUpdate() {
+        RatingMPA mpa = new RatingMPA(1,"G");
         Film filmUpdateCorrect = Film.builder()
                 .name("Updated film")
                 .duration(200)
                 .description("Updated Description")
                 .releaseDate(LocalDate.of(1900, 1, 15))
+                .mpa(mpa)
+                .likes(new HashSet<>())
+//                .
                 .build();
-        filmUpdateCorrect.setId(1);
+        filmUpdateCorrect.setId(3);
         testDataCorrectForUpdate.add(new TestData(
                 filmUpdateCorrect,
                 HttpStatus.OK,
@@ -105,13 +124,16 @@ public class FilmControllerTest extends ControllerTest {
     }
 
     private static void initCorrectTestDataForCreate() {
+        RatingMPA mpa = new RatingMPA(1,"G");
         Film film = Film.builder()
                 .name("Name film")
                 .duration(200)
                 .description("Description")
                 .releaseDate(LocalDate.of(1900, 1, 15))
+                .mpa(mpa)
+                .likes(new HashSet<>())
                 .build();
-        film.setId(1);
+        film.setId(3);
         testDataCorrectForCreate.add(new TestData(
                         film,
                         HttpStatus.CREATED,
@@ -121,6 +143,8 @@ public class FilmControllerTest extends ControllerTest {
                                 .duration(200)
                                 .description("Description")
                                 .releaseDate(LocalDate.of(1900, 1, 15))
+                                .mpa(mpa)
+                                .likes(new HashSet<>())
                                 .build()
                 )
         );
