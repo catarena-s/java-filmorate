@@ -11,11 +11,13 @@ import ru.yandex.practicum.filmorate.exception.FilmorateException;
 import ru.yandex.practicum.filmorate.exception.ItemNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.RatingMPA;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.storage.dao.DaoQueries.*;
 
@@ -23,34 +25,46 @@ import static ru.yandex.practicum.filmorate.storage.dao.DaoQueries.*;
 @Primary
 @Slf4j
 public class FilmDbStorage extends DaoStorage implements FilmStorage {
-    private final RatingMPADbStorage ratingMPADbStorage;
+    protected static final String FILM_ID = "film_id";
     private final GenreDbStorage genreDbStorage;
+    private final FilmGenreDBStorage filmGenresDbStorage;
     private final LikeDbStorage filmLikeDbStorage;
 
     @Autowired
     public FilmDbStorage(JdbcTemplate jdbcTemplate,
-                         RatingMPADbStorage ratingMPADbStorage,
                          GenreDbStorage genreDbStorage,
+                         FilmGenreDBStorage filmGenresDbStorage,
                          LikeDbStorage filmLikeDbStorage) {
         super(jdbcTemplate);
-        this.ratingMPADbStorage = ratingMPADbStorage;
         this.genreDbStorage = genreDbStorage;
+        this.filmGenresDbStorage = filmGenresDbStorage;
         this.filmLikeDbStorage = filmLikeDbStorage;
     }
 
     @Override
     public Collection<Film> getAll() {
         log.debug(LOG_MESSAGE_SQL_REQUEST, SELECT_FROM_FILM);
-        return jdbcTemplate.query(SELECT_FROM_FILM, (rs, rowNum) -> makeFilm(rs));
+        Collection<Genre> genres = genreDbStorage.getAll();
+        Map<Long, Set<Long>> filmsGenres = filmGenresDbStorage.getSetGenresFroAllFilms();
+        Map<Long, Set<Long>> filmLikes = filmLikeDbStorage.getSetLikesForAllFilms();
+
+        return jdbcTemplate.query(SELECT_FROM_FILM, (rs, rowNum) -> makeFilm(rs, genres, filmsGenres, filmLikes));
     }
 
     @Override
     public Film getById(long id) {
         try {
             log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(SELECT_FROM_FILM_WHERE_FILM_ID, id));
-            return jdbcTemplate.queryForObject(SELECT_FROM_FILM_WHERE_FILM_ID, (rs, rowNum) -> makeFilm(rs), id);
+
+            Set<Genre> setGenres = new HashSet<>(genreDbStorage.getByFilmId(id));
+            Set<Long> likes = new HashSet<>(filmLikeDbStorage.getUsersLikeId(id));
+
+            return jdbcTemplate.queryForObject(SELECT_FROM_FILM_WHERE_FILM_ID,
+                    (rs, rowNum) -> makeFilm(rs, setGenres, likes), id);
         } catch (EmptyResultDataAccessException ex) {
-            throw new ItemNotFoundException(String.format(MSG_ITEM_NOT_FOUND, "Film", id), log::error);
+            throw new ItemNotFoundException(
+                    String.format(MSG_ITEM_NOT_FOUND, "Film", id),
+                    log::error);
         }
     }
 
@@ -59,7 +73,7 @@ public class FilmDbStorage extends DaoStorage implements FilmStorage {
         try {
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                     .withTableName("film")
-                    .usingGeneratedKeyColumns("film_id");
+                    .usingGeneratedKeyColumns(FILM_ID);
 
             final long filmId = simpleJdbcInsert.executeAndReturnKey(film.toMap()).longValue();
 
@@ -75,23 +89,35 @@ public class FilmDbStorage extends DaoStorage implements FilmStorage {
             }
             return getById(filmId);
         } catch (Exception ex) {
-            throw new FilmorateException(ex.getMessage(), log::error);
+            log.error(ex.getMessage());
+            throw new FilmorateException(
+                    MSG_INSERT_ERROR,
+                    String.format("При добавлении фильма произошла ошибка: {%s}", film),
+                    log::error);
         }
     }
 
     @Override
     public List<Film> getTopByLikes(int top) {
-        final String sql = "SELECT f.*, COUNT(l.film_id) count_likes \n" +
-                "FROM FILM f LEFT JOIN likes l ON f.FILM_ID = l.FILM_ID \n" +
-                "GROUP BY f.film_id ORDER BY count(l.film_id) DESC, f.film_id ASC " +
-                "LIMIT ?";
+        Collection<Genre> genres = genreDbStorage.getAll();
+        Map<Long, Set<Long>> filmGenres = filmGenresDbStorage.getSetGenresForTopFilms(top);
+        Map<Long, Set<Long>> filmLikes = filmLikeDbStorage.getSetLikesForTopFilms(top);
+
+        final String sql =
+                "SELECT f.*, r.name as r_name  \n" +
+                        "FROM FILM f LEFT JOIN likes l ON f.FILM_ID = l.FILM_ID \n" +
+                        "LEFT JOIN rating r ON r.rating_id =f.rating_id \n" +
+                        "GROUP BY f.film_id, r.name ORDER BY count(l.film_id) DESC, f.film_id ASC \n" +
+                        "LIMIT ?";
+
         try {
             log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, top));
-            return jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs), top);
+
+            return jdbcTemplate.query(sql, (rs, rowNum) -> makeFilm(rs, genres, filmGenres, filmLikes), top);
         } catch (Exception ex) {
+            log.error(ex.getMessage());
             throw new FilmorateException(
-                    String.format(MSG_ERROR_SQL_QUERY, sql),
-                    ex.getMessage(),
+                    "Ошибка получения списка популярных фильмов",
                     log::error);
         }
     }
@@ -109,7 +135,11 @@ public class FilmDbStorage extends DaoStorage implements FilmStorage {
                 jdbcTemplate.update(INSERT_INTO_LIKES, filmId, userId);
                 return getById(filmId);
             } catch (Exception ex) {
-                throw new FilmorateException(MSG_ERROR_INSERT_INTO + " likes", log::error);
+                log.error(ex.getMessage());
+                throw new FilmorateException(
+                        MSG_INSERT_ERROR,
+                        String.format("При добавлении лайка(userID= %d) фильму(filmID= %d) произошла ошибка", userId, filmId),
+                        log::error);
             }
         }
         log.warn("User id={} уже ставил лайк фильму id = {}", userId, filmId);
@@ -136,7 +166,7 @@ public class FilmDbStorage extends DaoStorage implements FilmStorage {
         try {
             log.debug(LOG_MESSAGE_SQL_REQUEST,
                     sqlQueryToString(UPDATE_FILM, film.getName(), film.getDescription(),
-                                    film.getDuration(), film.getReleaseDate(), film.getMpa().getId(), film.getId()));
+                            film.getDuration(), film.getReleaseDate(), film.getMpa().getId(), film.getId()));
 
             jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getDescription(),
                     film.getDuration(), film.getReleaseDate(), film.getMpa().getId(), film.getId());
@@ -152,31 +182,52 @@ public class FilmDbStorage extends DaoStorage implements FilmStorage {
             }
             return getById(film.getId());
         } catch (Exception ex) {
-            throw new FilmorateException(MSG_ERROR_SQL_REQUEST, ex.getMessage(), log::error);
+            log.error(ex.getMessage());
+            throw new FilmorateException(
+                    MSG_UPDATE_ERROR,
+                    String.format("При обновлении данных фильма произошла ошибка: {%s}", film),
+                    log::error);
         }
     }
 
-    protected Film makeFilm(ResultSet rs) throws SQLException {
-        Film film = Film.builder()
-                .id(rs.getLong("film_id"))
+
+    private Film makeFilm(ResultSet rs,
+                          Collection<Genre> genres,
+                          Map<Long, Set<Long>> filmsGenres,
+                          Map<Long, Set<Long>> filmLikes) throws SQLException {
+
+        final long filmId = rs.getLong(FILM_ID);
+        Set<Long> filmGenreIds = Optional.ofNullable(filmsGenres.get(filmId)).orElse(new HashSet<>());
+        Set<Long> likes = Optional.ofNullable(filmLikes.get(filmId)).orElse(new HashSet<>());
+
+        final Set<Genre> setGenres = genres.stream()
+                .filter(f -> filmGenreIds.contains(f.getId()))
+                .collect(Collectors.toSet());
+
+
+        return makeFilm(rs, setGenres, likes);
+    }
+
+
+    private Film makeFilm(ResultSet rs,
+                          Set<Genre> setGenres,
+                          Set<Long> likes) throws SQLException {
+        final long filmId = rs.getLong(FILM_ID);
+
+        RatingMPA mpa = RatingMPA.builder()
+                .id(rs.getInt("rating_id"))
+                .name(rs.getString("r_name"))
+                .build();
+
+        return Film.builder()
+                .id(filmId)
                 .name(rs.getString("name"))
                 .description(rs.getString("description"))
                 .duration(rs.getInt("duration"))
                 .releaseDate(rs.getDate("release_date").toLocalDate())
+                .mpa(mpa)
+                .genres(setGenres)
+                .likes(new HashSet<>(likes))
                 .build();
-
-        final int ratingId = rs.getInt("rating_id");
-        if (ratingId != 0) {
-            film.setMpa(ratingMPADbStorage.getById(ratingId));
-        }
-
-        final Set<Genre> genres = new TreeSet<>(Comparator.comparing(Genre::getId));
-        genres.addAll(genreDbStorage.getByFilmId(film.getId()));
-        if (!genres.isEmpty()) film.setGenres(genres);
-
-        final List<Long> likes = filmLikeDbStorage.getUsersLikeId(film.getId());
-        if (!likes.isEmpty()) film.setLikes(new HashSet<>(likes));
-
-        return film;
     }
 }

@@ -2,11 +2,13 @@
 **Содержание**
 
 
-1. [ER-диаграмма](README.md#ER-диаграмм)
+1. [ER-диаграмма](README.md#ER-диаграмма)
 2. [Описание таблиц](README.md#Описание-таблиц)
-3. [Скрипты для Film](README.md#Скрипты-для-Film)
-4. [Скрипты для Users](README.md#Скрипты-для-Users)
+3. [Дамп БД](README.md#Дамп-БД)
+4. [SQL запросы для Film](README.md#SQL-запросы-для-Film)
+5. [SQL запросы для User_info](README.md#SQL-запросы-для-User_info)
 
+## ER диаграмма
 ![](docs/DB_schem.png)
 
 ## Описание таблиц
@@ -107,9 +109,10 @@
 | 5         | 	NC-17 | лицам до 18 лет просмотр запрещён                                        |
 </details>
 
-## Скрипты
-[Создание таблиц](src/main/resources/schema.sql)
-### для Film
+## Дамп БД
+- [schema.sql](src/main/resources/schema.sql)
+- [data.sql](src/main/resources/data.sql)
+### SQL запросы для Film
 
 + _GET /films_
 ````roomsql
@@ -180,7 +183,7 @@ ORDER BY count(l.film_id) DESC, f.film_id ASC
 LIMIT {count};
 ````
 ___
-###  для User_info
+###  SQL запросы для User_info
 
 [//]: # (#### Получить список всех друзей )
 * _GET /users_

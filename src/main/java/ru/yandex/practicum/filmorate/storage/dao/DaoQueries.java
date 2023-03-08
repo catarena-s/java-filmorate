@@ -5,7 +5,9 @@ public class DaoQueries {
     }
     //------------------------------------------------------------------------------------------------------------------
     //-- FILM -----
-    public static final String SELECT_FROM_FILM = "SELECT * FROM film";
+    public static final String SELECT_FROM_FILM =
+            "SELECT f.*, r.name AS r_name " +
+                    "FROM film f LEFT join rating r ON f.rating_id = r.rating_id ";
     protected static final String WHERE_FILM_ID = " WHERE film_id = ?";
     public static final String SELECT_COUNT_FROM_FILM_WHERE_FILM_ID = "SELECT COUNT(*) FROM film" + WHERE_FILM_ID;
     public static final String SELECT_FROM_FILM_WHERE_FILM_ID = SELECT_FROM_FILM + WHERE_FILM_ID;
@@ -21,9 +23,12 @@ public class DaoQueries {
     public static final String UPDATE_USER_INFO = "UPDATE user_info SET name=?, login=?, email=?, birthday=? WHERE user_id = ?";
     public static final String SELECT_FROM_USER_INFO_WHERE_USER_ID = SELECT_FROM_USER_INFO + " WHERE user_id = ?";
     public static final String SELECT_COUNT_FROM_USER_INFO_WHERE_USER_ID = SELECT_COUNT_FROM_USER_INFO + " WHERE user_id = ?";
-    public static final String SELECT_FROM_USER_INFO_WHERE_USER_ID_IN_S = SELECT_FROM_USER_INFO + " WHERE user_id in (%s)";
     //------------------------------------------------------------------------------------------------------------------
     //-- friendship
+    public static final String SELECT_FRIENDS_FROM_USER_INFO_WHERE_USER_ID =
+            "SELECT ui.* FROM user_info AS ui \n" +
+                    "LEFT JOIN friendship AS f ON ui.user_id = f.friend_id \n" +
+                    "WHERE f.user_id =?";
     public static final String DELETE_FROM_FRIENDSHIP_WHERE_USER_ID_AND_FRIEND_ID
             = "DELETE FROM friendship WHERE (user_id = ? AND friend_id = ?)";
     public static final String INSERT_INTO_FRIENDS_USER_ID_FRIEND_ID_VALUES

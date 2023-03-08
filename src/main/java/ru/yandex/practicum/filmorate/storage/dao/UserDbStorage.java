@@ -16,7 +16,6 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static ru.yandex.practicum.filmorate.storage.dao.DaoQueries.*;
 
@@ -24,12 +23,13 @@ import static ru.yandex.practicum.filmorate.storage.dao.DaoQueries.*;
 @Primary
 @Slf4j
 public class UserDbStorage extends DaoStorage implements UserStorage {
-    private final FriendshipDbStorage friendDAO;
+    protected static final String USER_ID = "user_id";
+    private final FriendshipDbStorage friendshipDAO;
 
     @Autowired
-    public UserDbStorage(JdbcTemplate jdbcTemplate, FriendshipDbStorage friendDAO) {
+    public UserDbStorage(JdbcTemplate jdbcTemplate, FriendshipDbStorage friendshipDAO) {
         super(jdbcTemplate);
-        this.friendDAO = friendDAO;
+        this.friendshipDAO = friendshipDAO;
     }
 
     @Override
@@ -39,19 +39,40 @@ public class UserDbStorage extends DaoStorage implements UserStorage {
         try {
             SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                     .withTableName("user_info")
-                    .usingGeneratedKeyColumns("user_id");
+                    .usingGeneratedKeyColumns(USER_ID);
 
             final long userId = simpleJdbcInsert.executeAndReturnKey(user.toMap()).longValue();
 
             return getById(userId);
         } catch (Exception ex) {
-            throw new FilmorateException("Ошибка добавления в таблицу user_info", ex.getMessage(), log::error);
+            log.error(ex.getMessage());
+            throw new FilmorateException(
+                    MSG_INSERT_ERROR,
+                    String.format("При добавлении пользователя произошла ошибка: {%s}", user),
+                    log::error);
         }
     }
 
     @Override
     public Collection<User> getAll() {
-        return jdbcTemplate.query(SELECT_FROM_USER_INFO, (rs, rowNum) -> makeUser(rs));
+        Map<Long, Set<Friend>> setFriends = friendshipDAO.getSetFriendsForAllUsers();
+        return jdbcTemplate.query(SELECT_FROM_USER_INFO, (rs, rowNum) -> makeUser(rs, setFriends));
+    }
+
+    @Override
+    public User getById(long id) {
+        final String sql = SELECT_FROM_USER_INFO_WHERE_USER_ID;
+        try {
+            log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, id));
+            Set<Friend> friendList = new HashSet<>(friendshipDAO.getFriends(id));
+
+            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeUser(rs, friendList), id);
+        } catch (EmptyResultDataAccessException ex) {
+            log.error(ex.getMessage());
+            throw new ItemNotFoundException(
+                    String.format(MSG_ITEM_NOT_FOUND, "User", id),
+                    log::error);
+        }
     }
 
     @Override
@@ -59,47 +80,17 @@ public class UserDbStorage extends DaoStorage implements UserStorage {
         throwExceptionIfNoExistById(SELECT_COUNT_FROM_USER_INFO_WHERE_USER_ID, user.getId(), "User", log);
 
         final String sql = UPDATE_USER_INFO;
+
         log.debug(LOG_MESSAGE_SQL_REQUEST,
                 sqlQueryToString(sql, user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId()));
         try {
             jdbcTemplate.update(sql, user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
             return getById(user.getId());
         } catch (Exception ex) {
+            log.error(ex.getMessage());
             throw new FilmorateException(
-                    String.format(MSG_ERROR_SQL_QUERY, sql),
-                    ex.getMessage(),
-                    log::error);
-        }
-    }
-
-
-    @Override
-    public User getById(long id) {
-        final String sql = SELECT_FROM_USER_INFO_WHERE_USER_ID;
-        try {
-            log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, id));
-            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeUser(rs), id);
-        } catch (EmptyResultDataAccessException ex) {
-            throw new ItemNotFoundException(
-                    String.format(MSG_ITEM_NOT_FOUND, "User", id),
-                    ex.getMessage(),
-                    log::error);
-        }
-    }
-
-    public List<User> getByIds(List<Friend> friends) {
-        final String sql = String.format(SELECT_FROM_USER_INFO_WHERE_USER_ID_IN_S,
-                friends.stream()
-                        .map(Friend::getUserId)
-                        .map(String::valueOf)
-                        .collect(Collectors.joining(",")));
-        try {
-            log.debug(LOG_MESSAGE_SQL_REQUEST, sql);
-            return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs));
-        } catch (Exception ex) {
-            throw new FilmorateException(
-                    String.format(MSG_ERROR_SQL_QUERY, sql),
-                    ex.getMessage(),
+                    MSG_UPDATE_ERROR,
+                    String.format("При обновлении данных пользователя произошла ошибка: {%s}", user),
                     log::error);
         }
     }
@@ -108,10 +99,10 @@ public class UserDbStorage extends DaoStorage implements UserStorage {
     public List<User> getFriendsForUser(long userId) {
         throwExceptionIfNoExistById(SELECT_COUNT_FROM_USER_INFO_WHERE_USER_ID, userId, "User", log);
 
-        final List<Friend> friends = friendDAO.getFriends(userId);
-        if (friends.isEmpty()) return Collections.emptyList();
-
-        return getByIds(friends);
+        final String sql = SELECT_FRIENDS_FROM_USER_INFO_WHERE_USER_ID;
+        log.debug(LOG_MESSAGE_SQL_REQUEST, sql, userId);
+        Map<Long, Set<Friend>> setFriends = friendshipDAO.getSetFriendsForUsers(userId);
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeUser(rs, setFriends), userId);
     }
 
     @Override
@@ -122,27 +113,29 @@ public class UserDbStorage extends DaoStorage implements UserStorage {
         // проверяем наличие пользователя в бд с id = otherId
         throwExceptionIfNoExistById(sql, otherId, "User", log);
 
-        final Set<Friend> user1Friends = new HashSet<>(friendDAO.getFriends(userId));
-        final Set<Friend> user2Friends = new HashSet<>(friendDAO.getFriends(otherId));
-        user1Friends.retainAll(user2Friends);
+        final String sqlCommonFriends = "SELECT u.user_id, u.name, u.login,u.email, u.birthday\n" +
+                "FROM user_info u INNER JOIN (\n" +
+                "    SELECT friend_id  FROM friendship f WHERE user_id = ?\n" +
+                "    INTERSECT \n" +
+                "    SELECT friend_id  FROM friendship f WHERE user_id = ?\n" +
+                ") f ON f.friend_id = u.user_id";
 
-        if (user1Friends.isEmpty()) return Collections.emptyList();
+        log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sqlCommonFriends, userId, otherId));
 
-        return getByIds(new ArrayList<>(user1Friends));
+        Map<Long, Set<Friend>> setFriends = friendshipDAO.getSetFriendsForCommonFriends(userId, otherId);
+
+        return jdbcTemplate.query(sqlCommonFriends, (rs, rowNum) -> makeUser(rs, setFriends), userId, otherId);
     }
 
     @Override
     public User removeFromFriends(long userId, long friendId) {
-        String sql = SELECT_COUNT_FROM_USER_INFO_WHERE_USER_ID;
+        final String sql = SELECT_COUNT_FROM_USER_INFO_WHERE_USER_ID;
         // проверяем наличие пользователя в бд с id = userId
         throwExceptionIfNoExistById(sql, userId, "User", log);
         // проверяем наличие пользователя в бд с id = friendId
         throwExceptionIfNoExistById(sql, friendId, "User", log);
 
-        sql = DELETE_FROM_FRIENDSHIP_WHERE_USER_ID_AND_FRIEND_ID;
-        log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, userId, friendId));
-        final int count = jdbcTemplate.update(sql, userId, friendId);
-        log.debug("Было удалено {} строк из таблицы friends", count);
+        friendshipDAO.removeFromFriendship(userId, friendId);
         return getById(userId);
     }
 
@@ -154,33 +147,31 @@ public class UserDbStorage extends DaoStorage implements UserStorage {
         // проверяем наличие пользователя в бд с id = friendId
         throwExceptionIfNoExistById(sql, friendId, "User", log);
         // проверяем наличие записи в таблице friendship
-        if (friendDAO.isFriendshipExist(friendId, userId)) {
+        if (friendshipDAO.isFriendshipExist(userId, friendId)) {
             log.warn("Friend id={} уже добавлен в друзья пользователю id={}", friendId, userId);
             return getById(userId);
         }
 
-        sql = INSERT_INTO_FRIENDS_USER_ID_FRIEND_ID_VALUES;
-        log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, userId, friendId));
-        try {
-            jdbcTemplate.update(sql, userId, friendId);
-            return getById(userId);
-        } catch (Exception ex) {
-            throw new FilmorateException(String.format("Ошибка выполнения sql запроса %s", sql),
-                    ex.getMessage(), log::error);
-        }
+        friendshipDAO.addFriendship(userId, friendId);
+        return getById(userId);
     }
 
-    private User makeUser(ResultSet rs) throws SQLException {
-        User user = User.builder()
-                .id(rs.getLong("user_id"))
+    private User makeUser(ResultSet rs, Map<Long, Set<Friend>> setFriends) throws SQLException {
+        final long userId = rs.getLong(USER_ID);
+        Set<Friend> friends = setFriends.getOrDefault(userId, new HashSet<>());
+
+        return makeUser(rs, friends);
+    }
+
+    private User makeUser(ResultSet rs, Set<Friend> friendSet) throws SQLException {
+        return User.builder()
+                .id(rs.getLong(USER_ID))
                 .email(rs.getString("email"))
                 .login(rs.getString("login"))
                 .name(rs.getString("name"))
                 .birthday(rs.getDate("birthday").toLocalDate())
+                .friends(friendSet)
                 .build();
-        final List<Friend> friends = friendDAO.getFriends(user.getId());
-        user.setFriends(new HashSet<>(friends));
-        return user;
     }
 
 }

@@ -34,12 +34,13 @@ public class User extends FilmorateObject {
     private Set<Friend> friends = new HashSet<>();
 
     @Builder(toBuilder = true)
-    public User(long id, String login, String name, String email, LocalDate birthday) {
+    public User(long id, String login, String name, String email, LocalDate birthday, Set<Friend> friends) {
         super(id);
         this.login = login;
         this.name = name;
         this.email = email;
         this.birthday = birthday;
+        if (friends != null) addFriends(friends);
     }
 
     public User updateData(User obj) {
@@ -50,12 +51,16 @@ public class User extends FilmorateObject {
         return this;
     }
 
-    public void addFriend(Long fiendId) {
-        friends.add(new Friend(fiendId, false));
+    public void addFriend(Friend fiend) {
+        friends.add(fiend);
     }
 
     public void removeFriendById(Long friendId) {
         friends.removeIf(friend -> friend.getUserId() == friendId);
+    }
+
+    public void addFriends(Set<Friend> friends) {
+        this.friends.addAll(friends);
     }
 
     public Map<String, Object> toMap() {

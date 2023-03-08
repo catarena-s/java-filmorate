@@ -26,12 +26,14 @@ public class RatingMPADbStorage extends DaoStorage implements RatingMPAStorage {
         try {
             final String sql = "SELECT * FROM rating WHERE rating_id = ? ORDER BY rating_id";
             log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, id));
-            return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeRating(rs), id);
+            RatingMPA ratingMPA = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeRating(rs), id);
+            return ratingMPA;
         } catch (Exception e) {
-            throw new ItemNotFoundException(String.format("Rating MPA не найден id=%d", id), log::error);
+            throw new ItemNotFoundException(
+                    String.format("Rating MPA не найден id=%d", id),
+                    log::error);
         }
     }
-
 
     @Override
     public Collection<RatingMPA> getAll() {

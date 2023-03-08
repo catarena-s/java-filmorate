@@ -13,7 +13,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component()
 @Slf4j
@@ -31,8 +30,9 @@ public class GenreDbStorage extends DaoStorage implements GenreStorage {
             log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, id));
             return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> makeGenre(rs), id);
         } catch (EmptyResultDataAccessException ex) {
-            throw new ItemNotFoundException(String.format(MSG_ITEM_NOT_FOUND, "Genre", id),
-                    ex.getMessage(),
+            log.error(ex.getMessage());
+            throw new ItemNotFoundException(
+                    String.format(MSG_ITEM_NOT_FOUND, "Genre", id),
                     log::error);
         }
     }
@@ -44,13 +44,15 @@ public class GenreDbStorage extends DaoStorage implements GenreStorage {
         return jdbcTemplate.query(sql, (rs, rowNum) -> makeGenre(rs));
     }
 
+    @Override
     public List<Genre> getByFilmId(long filmId) {
-        final String sql = "SELECT genre_id FROM film_genre WHERE film_id = ? ORDER BY genre_id";
+        final String sql =
+                "SELECT g.* \n" +
+                        "FROM genre AS g \n" +
+                        "RIGHT JOIN film_genre fg ON g.genre_id = fg.genre_id \n" +
+                        "WHERE film_id = ? ORDER BY genre_id";
         log.debug(LOG_MESSAGE_SQL_REQUEST, sqlQueryToString(sql, filmId));
-        final List<Integer> genreListId = jdbcTemplate.query(sql, (rs, rowNum) -> rs.getInt("genre_id"), filmId);
-        return genreListId.stream()
-                .map(this::getById)
-                .collect(Collectors.toList());
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeGenre(rs), filmId);
     }
 
     private Genre makeGenre(ResultSet rs) throws SQLException {
@@ -59,4 +61,6 @@ public class GenreDbStorage extends DaoStorage implements GenreStorage {
                 .name(rs.getString("name"))
                 .build();
     }
+
+
 }
