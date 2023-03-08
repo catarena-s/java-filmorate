@@ -50,7 +50,7 @@ public class FilmController extends Controller<Film> {
     @PutMapping(value = "/{id}/like/{userId}")
     public Film putLike(@PathVariable(name = "id") long filmId,
                         @PathVariable(name = "userId") long userId) {
-        log.debug("Получен PUT запрос '/films/{}/friends/{}'", filmId, userId);
+        log.debug("Получен PUT запрос '/films/{}/like/{}'", filmId, userId);
         return ((FilmService) service).addLike(filmId, userId);
     }
 

@@ -41,6 +41,6 @@ public abstract class Controller<T extends FilmorateObject> implements IControll
     @GetMapping("/{id}")
     @Override
     public T getById(long id) {
-        return service.get(id);
+        return service.getById(id);
     }
 }

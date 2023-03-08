@@ -11,5 +11,5 @@ public interface IService<T extends FilmorateObject> {
 
     T update(T obj);
 
-    T get(long id);
+    T getById(long id);
 }

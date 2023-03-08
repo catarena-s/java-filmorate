@@ -52,7 +52,7 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleFilmorateError(final FilmorateException e) {
-        return new ErrorResponse(e.getMessage());
+        return new ErrorResponse(e.getMessage(), e.getDescription());
     }
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)

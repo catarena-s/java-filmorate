@@ -1,23 +1,19 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService implements IService<User> {
     private final UserStorage storage;
-
-    public UserService(UserStorage storage) {
-        this.storage = storage;
-    }
 
     /**
      * Добавить друга
@@ -26,11 +22,7 @@ public class UserService implements IService<User> {
      * @param friendId id друга
      */
     public User addFriend(long userId, long friendId) {
-        User user = storage.getById(userId);
-        User friend = storage.getById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
-        return user;
+        return storage.addFriend(userId, friendId);
     }
 
     /**
@@ -40,30 +32,21 @@ public class UserService implements IService<User> {
      * @param friendId id друга, которого нужно удалить
      */
     public User removeFromFriends(long userId, long friendId) {
-        User user = storage.getById(userId);
-        User friend = storage.getById(friendId);
-        user.getFriends().remove(friend.getId());
-        friend.getFriends().remove(user.getId());
-        return user;
+        return storage.removeFromFriends(userId, friendId);
     }
 
     /**
      * Получить список общих друзей
      */
     public List<User> getCommonFriends(long userId, long otherId) {
-        User user = storage.getById(userId);
-        User otherUser = storage.getById(otherId);
-        Set<Long> user1Friends = new HashSet<>(user.getFriends());
-        Set<Long> user2Friends = new HashSet<>(otherUser.getFriends());
-        user1Friends.retainAll(user2Friends);
-        return storage.getUsers(user1Friends);
+        return storage.getCommonFriends(userId, otherId);
     }
 
     /**
      * Получить список друзей пользователя
      */
     public List<User> getFriends(long userId) {
-        return storage.getFriends(userId);
+        return storage.getFriendsForUser(userId);
     }
 
     @Override
@@ -84,14 +67,14 @@ public class UserService implements IService<User> {
     }
 
     @Override
-    public User get(long id) {
+    public User getById(long id) {
         return storage.getById(id);
     }
 
     protected void validate(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
-            log.warn("Поле 'name' не заполнено. Было инициализировано значением login = '{}'.",user.getLogin());
+            log.warn("Поле 'name' не заполнено. Было инициализировано значением login = '{}'.", user.getLogin());
         }
     }
 }
