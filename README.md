@@ -1,12 +1,23 @@
-# JAVA Filmorate project.
-**Содержание**
+# Java Filmorate project.
 
+Filmorate - это бэкэнд-сервис на основе Restful API для хранения и управления информацией о фильмах(название, рейтинг MPA, жанр, описание и продолжительность), составления рейтинга фильмов на основе отзывов пользователей, поиска фильма, а также для общения пользователей.
 
-1. [ER-диаграмма](README.md#ER-диаграмма)
-2. [Описание таблиц](README.md#Описание-таблиц)
-3. [Дамп БД](README.md#Дамп-БД)
-4. [SQL запросы для Film](README.md#SQL-запросы-для-Film)
-5. [SQL запросы для User_info](README.md#SQL-запросы-для-User_info)
+## Стек
+* Java 11, Spring Boot, Lombok, Maven, Junit, JDBC, SQL, H2
+
+Функциональность:
+1. [x] Создание/редактирование/удаление карточки фильма
+2. [x] Получение фильма по id
+3. [x] Получение списка всех фильмов
+4. [x] Получение списка наиболее популярных фильмов
+5. [x] Создание/редактирование/удаление профилей пользователей
+6. [x] Получение списка всех пользователей
+7. [x] Добавление пользователей в друзья, возможность рекомендовать фильм друг другу
+8. [x] Получение списка друзей пользователя
+9. [x] Получение списка общих друзей между двумя пользователями
+10. [x] Получение списка рейтингов MPA, получения рейтинга по id
+11. [x] Получение списка жанров, получение жанра по id
+12. [x] Возможность поставить/удалить лайк фильму
 
 ## ER диаграмма
 ![](docs/DB_schem.png)
@@ -144,16 +155,6 @@ UPDATE film
 SET name = {name}, description = {description}, duration = {duration}, release_date = {release_date}
 WHERE film_id = {id};
 ````
-
-[//]: # (````)
-
-[//]: # (update public.film)
-
-[//]: # (SET rating_id = 2)
-
-[//]: # (WHERE film_id= 7;)
-
-[//]: # (````)
 * _DELETE /films/{id}_
 ````roomsql
 DELETE FROM film
@@ -185,7 +186,6 @@ LIMIT {count};
 ___
 ###  SQL запросы для User_info
 
-[//]: # (#### Получить список всех друзей )
 * _GET /users_
 ````roomsql
 SELECT user_id, name, login, email, birthday
@@ -209,7 +209,6 @@ DELETE FROM users_info
 WHERE user_id = {id};
 ````
 
-[//]: # (#### Получить список друзе)
 * _GET /users/{id}/friends_
 ````roomsql
 SELECT u.user_id, u.name, u.login,u.email, u.birthday
@@ -217,34 +216,17 @@ FROM friendship f2
 LEFT JOIN users u ON u.user_id = f2.friend_id 
 WHERE f2.user_id = {id}
 ````
-
-[//]: # (#### Добавить друга)
 * _PUT /users/{id}/friends/{friendId}_
 ````roomsql
 INSERT INTO friendship
 VALUES ({id}, {friendId})
 ON CONFLICT DO NOTHING;
 ````
-
-[//]: # (#### Подтверждение дружбы)
-[//]: # (````)
-
-[//]: # (UPDATE friends)
-
-[//]: # (SET friendship_state = true)
-
-[//]: # (WHERE &#40;user_id={id} AND friend_id={friendId}&#41;;)
-
-[//]: # (````)
-
-[//]: # (#### Удалить друга)
 * _DELETE /users/{id}/friends/{friendId}_
 ````roomsql
 DELETE FROM friendship 
 WHERE (user_id = {id} AND friend_id = {friendId});
 ````
-
-[//]: # (#### Получить общих друзей)
 * _GET /users/{id}/friends/common/{otherId}_
 ````roomsql
 SELECT u.user_id, u.name, u.login,u.email, u.birthday
@@ -254,4 +236,8 @@ FROM user_info u INNER JOIN (
     SELECT friend_id  FROM friendship f WHERE user_id = {otherId}
 ) f ON f.friend_id = u.user_id
 ````
+## Quick start
 
+    mvn package
+    
+    java -jar -Dfile.encoding=UTF-8 target/filmorate-0.1.1-SNAPSHOT.jar
